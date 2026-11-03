@@ -1,0 +1,20 @@
+{
+  "name": "comparador-json",
+  "title": "Comparador JSON",
+  "description": "Comparação de documentos JSON com diferenças por campo.",
+  "primary_language": "PHP",
+  "proposed_technologies": "PHP, Symfony Console e JSON Schema",
+  "status": "initial-core",
+  "github_created": false,
+  "application_implemented": true,
+  "planned_features": [
+    "Validar dois documentos JSON",
+    "Destacar campos adicionados e removidos",
+    "Exportar relatório de diferenças"
+  ],
+  "implemented_technologies": [
+    "PHP",
+    "Biblioteca padrão"
+  ],
+  "validation": "Consulte GitHub Actions"
+}
