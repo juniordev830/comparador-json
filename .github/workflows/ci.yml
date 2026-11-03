@@ -12,3 +12,11 @@ jobs:
           persist-credentials: false
       - name: Analisar sintaxe e testar
         run: docker run --rm -v "$PWD:/work" -w /work php:8.3-cli sh -c 'php -l main.php && php main.php --self-test'
+      - name: Validar resumo e código de diferença na CLI
+        run: |
+          docker run --rm -v "$PWD:/work" -w /work php:8.3-cli php main.php --resumo examples/antes.json examples/depois.json | grep -F '"iguais": false'
+          set +e
+          docker run --rm -v "$PWD:/work" -w /work php:8.3-cli php main.php --falhar-se-diferente examples/antes.json examples/depois.json >/dev/null
+          status=$?
+          set -e
+          test "$status" -eq 1
