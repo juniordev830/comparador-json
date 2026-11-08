@@ -1,39 +1,68 @@
 # Comparador JSON
 
-Comparação de documentos JSON com diferenças por campo.
+Comparador local de documentos JSON em **PHP 8.3**, com inspeção de mudanças por campo, suporte a JSON Pointer e relatórios em JSON, texto e CSV. Não utiliza bibliotecas externas nem serviços de nuvem.
 
-## Implementado na primeira versão
+## Comparar documentos
 
-**PHP — núcleo executável de domínio.** Compara JSON por campo, preservando a diferença entre objeto, lista e null. Produz caminhos JSON Pointer com escape de barras e tils.
+O comando original continua funcionando:
 
-## Como executar
-
-Instale PHP 8.3 CLI. Não há dependências Composer. Os comandos abaixo partem da raiz do repositório.
-
-```sh
+```bash
 php main.php examples/antes.json examples/depois.json
 ```
 
-## Testes
+A nova CLI oferece relatórios e filtros:
 
-```sh
-php main.php --self-test
+```bash
+php cli/inspect.php examples/antes.json examples/depois.json
+php cli/inspect.php examples/antes.json examples/depois.json --format=text
+php cli/inspect.php examples/antes.json examples/depois.json --format=csv > relatorio.csv
+php cli/inspect.php examples/antes.json examples/depois.json --array-mode=index
+php cli/inspect.php examples/antes.json examples/depois.json --path=/cliente --summary
+php cli/inspect.php examples/antes.json examples/depois.json --fail-on-diff
 ```
 
-Os testes cobrem invariantes e entradas inválidas. A preparação local não dispõe deste runtime; o workflow em `.github/workflows/ci.yml` executa a validação no GitHub Actions. O resultado de cada execução está na aba Actions, associado ao commit.
+O último exemplo retorna código **1** quando identifica diferenças, podendo ser usado em pipelines. Sem diferenças, retorna **0**; erro de parâmetro ou leitura retorna **2**.
 
-## Organização e limites
+## Implementação
 
-Código e exemplos: `main.php e examples/*.json`. Os dados de exemplo são fictícios. As funções de domínio são separadas da leitura de argumentos no mesmo arquivo para manter a primeira versão pequena e revisável.
+- Comparação profunda de objetos com caminhos ordenados e escape correto de JSON Pointer.
+- Preservação das diferenças entre objeto vazio, array vazio, `null`, números e strings.
+- Dois modos de comparação de arrays: `atomic` (trata arrays inteiros como valores) e `index` (compara por posição).
+- Consulta de valores em qualquer JSON Pointer existente, inclusive escapes de `/` e `~`.
+- Filtro por subárvore e resumo por operações adicionadas, removidas ou substituídas.
+- Relatório em texto para revisão humana e CSV com proteção contra fórmulas de planilha.
+- Limites de segurança: 2 MB por arquivo, profundidade de 64 níveis e até 10.000 diferenças.
+- Os documentos são apenas lidos; nenhuma alteração é aplicada a eles.
 
-Arrays são comparados como um valor completo. O relatório não é um patch RFC 6902. Inteiros maiores que a precisão nativa são lidos como strings; números 1 e 1.0 são distintos. JSON Schema e Symfony Console são etapas futuras.
+**Importante:** o relatório é um diagnóstico e **não** deve ser tratado como um JSON Patch RFC 6902 pronto para aplicar. O modo `index` não implementa identificação inteligente de elementos de lista e pode considerar uma inserção no começo da lista como várias substituições.
 
-A proposta completa de evolução está em `ARQUITETURA.md`. As tecnologias propostas nessa arquitetura não devem ser interpretadas como dependências já implementadas.
+## Testes
 
-## Próximas entregas
+```bash
+php -l main.php
+php -l src/JsonInspector.php
+php -l cli/inspect.php
+php main.php --self-test
+php tests/JsonInspectorTest.php
+php tests/CliTest.php
+```
 
-- [ ] Validar dois documentos JSON — ampliar o núcleo atual até o fluxo completo.
-- [ ] Destacar campos adicionados e removidos — ampliar o núcleo atual até o fluxo completo.
-- [ ] Exportar relatório de diferenças — ampliar o núcleo atual até o fluxo completo.
+Os mesmos testes são executados no GitHub Actions com PHP 8.3. Dados de exemplo são fictícios; não envie documentos com segredos para o repositório.
 
-Licença: ainda não definida.
+## Biblioteca
+
+```php
+<?php
+require 'src/JsonInspector.php';
+
+use GX\JsonTools\JsonInspector;
+
+$antes = JsonInspector::decode('{"a":1,"b":[1,2]}');
+$depois = JsonInspector::decode('{"a":2,"b":[1,3]}');
+$changes = JsonInspector::compare($antes, $depois, 'index');
+echo JsonInspector::asText($changes);
+```
+
+## Licença
+
+Ainda não definida.
