@@ -23,6 +23,7 @@ final class JsonInspector
         if (!is_file($filename) || !is_readable($filename)) {
             throw new RuntimeException('Arquivo JSON não encontrado ou inacessível.');
         }
+        clearstatcache(true, $filename);
         $size = filesize($filename);
         if ($size === false || $size > self::MAX_BYTES) {
             throw new RuntimeException('Documento excede 2 MB.');
