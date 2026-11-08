@@ -194,13 +194,43 @@ final class JsonInspector
         self::emit($changes, 'replace', $path, $a, $b);
     }
 
-    private static function equal(mixed $a, mixed $b): bool
+    /**
+     * Compare JSON values structurally: object key order is irrelevant, while
+     * array positions and scalar types remain significant.
+     */
+    private static function equal(mixed $a, mixed $b, int $depth = 0): bool
     {
+        if ($depth > self::MAX_DEPTH) {
+            throw new RuntimeException('Profundidade máxima excedida.');
+        }
         if (get_debug_type($a) !== get_debug_type($b)) {
             return false;
         }
-        if ($a instanceof stdClass || is_array($a)) {
-            return self::encode($a) === self::encode($b);
+        if ($a instanceof stdClass) {
+            $left = get_object_vars($a);
+            $right = get_object_vars($b);
+            if (count($left) !== count($right)) {
+                return false;
+            }
+            foreach ($left as $key => $value) {
+                if (!array_key_exists($key, $right) ||
+                    !self::equal($value, $right[$key], $depth + 1)) {
+                    return false;
+                }
+            }
+            return true;
+        }
+        if (is_array($a)) {
+            if (count($a) !== count($b)) {
+                return false;
+            }
+            foreach ($a as $index => $value) {
+                if (!array_key_exists($index, $b) ||
+                    !self::equal($value, $b[$index], $depth + 1)) {
+                    return false;
+                }
+            }
+            return true;
         }
         return $a === $b;
     }
