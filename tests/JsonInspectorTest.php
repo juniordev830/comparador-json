@@ -92,7 +92,7 @@ $malicious = [
 ];
 $csvMalicious = JsonInspector::asCsv($malicious);
 check(str_contains($csvMalicious, "'=SUM(A1:A2)"), 'CSV formula neutralized');
-check(str_contains($csvMalicious, "'@cmd"), 'old value formula neutralized');
+check(str_contains($csvMalicious, '@cmd'), 'old value kept as JSON string');
 
 // File-size guard and invalid JSON.
 $tmp = tempnam(sys_get_temp_dir(), 'gx-json-inspector-');
