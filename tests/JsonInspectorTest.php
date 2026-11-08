@@ -41,6 +41,20 @@ check(JsonInspector::compare(json('null'), json('false'))[0]['old'] === null, 'n
 check(JsonInspector::compare(json('[]'), json('{}')) !== [], 'empty object versus list');
 check(JsonInspector::compare(json('[1,2]'), json('[2,1]'))[0]['op'] === 'replace', 'arrays atomic');
 
+// JSON objects are unordered, even when nested within atomic arrays.
+$reordered = json('[{"profile":{"name":"Ana","role":"Dev"},"active":true}]');
+$sameReordered = json('[{"active":true,"profile":{"role":"Dev","name":"Ana"}}]');
+check(JsonInspector::compare($reordered, $sameReordered) === [],
+    'atomic array with reordered object keys is unchanged');
+check(JsonInspector::compare(json('[{"a":1}]'), json('[{"a":2}]'))[0]['path'] === '',
+    'atomic array detects a real nested value change');
+check(JsonInspector::compare(json('[1,2]'), json('[2,1]')) !== [],
+    'array element order remains significant');
+check(JsonInspector::compare(json('[{"n":1}]'), json('[{"n":1.0}]')) !== [],
+    'nested numeric types remain significant');
+check(JsonInspector::compare(json('[{"a":1}]'), json('[{"a":1,"b":2}]')) !== [],
+    'nested object missing key remains significant');
+
 // Deep changes and deterministic sorting.
 $before = json('{"z":2,"nested":{"a":1,"b":null},"a/b":5}');
 $after = json('{"z":3,"nested":{"a":4,"c":true},"a/b":7}');
