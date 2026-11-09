@@ -19,9 +19,17 @@ php cli/inspect.php examples/antes.json examples/depois.json --format=csv > rela
 php cli/inspect.php examples/antes.json examples/depois.json --array-mode=index
 php cli/inspect.php examples/antes.json examples/depois.json --path=/cliente --summary
 php cli/inspect.php examples/antes.json examples/depois.json --fail-on-diff
+php cli/inspect.php examples/antes.json examples/depois.json --ignore-path=/metadata/updatedAt
 ```
 
 O último exemplo retorna código **1** quando identifica diferenças, podendo ser usado em pipelines. Sem diferenças, retorna **0**; erro de parâmetro ou leitura retorna **2**.
+
+
+## Ignorar caminhos específicos
+
+Use `--ignore-path=/caminho` uma ou mais vezes para retirar determinadas alterações de relatórios, resumo e do código de saída `--fail-on-diff`. A opção usa JSON Pointer, inclusive `~1` para barras e `~0` para tils. O filtro respeita segmentos: ignorar `/audit` não ignora `/auditor`.
+
+**Limitação importante:** o filtro é aplicado **após** a comparação e não oculta informações na memória nem remove mudanças em um caminho ancestral; não use como redator de segredos. No modo `atomic` para arrays, mudanças nos filhos aparecem no caminho do array inteiro. O limite de 10.000 alterações continua aplicado antes do filtro.
 
 ## Implementação
 
