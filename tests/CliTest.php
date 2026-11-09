@@ -58,6 +58,21 @@ try {
     $stats = json_decode($output, true, 32, JSON_THROW_ON_ERROR);
     cliAssert($stats['total'] === 1, 'path filtering');
 
+    [$status, $output] = runCli([$old, $new, '--ignore-path=/team/name', '--summary']);
+    $stats = json_decode($output, true, 32, JSON_THROW_ON_ERROR);
+    cliAssert($status === 0 && $stats['total'] === 1 &&
+        $stats['paths'] === ['/team/skills'], 'ignore specified JSON Pointer subtree');
+
+    [$status] = runCli([$old, $new, '--ignore-path=/team', '--fail-on-diff']);
+    cliAssert($status === 0, 'excluded changes do not trigger fail-on-diff');
+
+    [$status] = runCli([$old, $new, '--ignore-path=/team/name', '--ignore-path=/team/skills',
+        '--fail-on-diff']);
+    cliAssert($status === 0, 'multiple ignore paths');
+
+    [$status] = runCli([$old, $new, '--ignore-path=/team/~2bad']);
+    cliAssert($status === 2, 'invalid JSON Pointer escape is rejected');
+
     [$status, $output] = runCli([$old, $new, '--format=text']);
     cliAssert(str_contains($output, 'REPLACE /team/name'), 'human readable output');
 
@@ -81,7 +96,7 @@ try {
 
     [$status] = runCli(['--help']);
     cliAssert($status === 0, 'help should pass');
-    echo "JsonInspector CLI: 12 scenarios passed.\n";
+    echo "JsonInspector CLI: 16 scenarios passed.\n";
 } finally {
     foreach (glob($directory . '/*') ?: [] as $file) {
         unlink($file);
