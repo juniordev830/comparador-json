@@ -262,6 +262,38 @@ final class JsonInspector
         ));
     }
 
+    /**
+     * Remove diagnostic entries at ignored JSON Pointer paths and descendants.
+     * This filters the finished diff; it does not prevent values from being
+     * compared in memory and cannot hide a change emitted at an ancestor path.
+     *
+     * @param list<array<string,mixed>> $changes
+     * @param list<string> $ignored
+     * @return list<array<string,mixed>>
+     */
+    public static function exclude(array $changes, array $ignored): array
+    {
+        if (!array_is_list($ignored) || count($ignored) > 100) {
+            throw new InvalidArgumentException('Informe até 100 caminhos ignorados.');
+        }
+        foreach ($ignored as $pointer) {
+            if (!is_string($pointer)) {
+                throw new InvalidArgumentException('Caminho ignorado deve ser texto.');
+            }
+            self::segments($pointer);
+        }
+        return array_values(array_filter($changes, static function (array $entry) use ($ignored): bool {
+            $path = (string) $entry['path'];
+            foreach ($ignored as $pointer) {
+                if ($pointer === '' || $path === $pointer ||
+                    str_starts_with($path, $pointer . '/')) {
+                    return false;
+                }
+            }
+            return true;
+        }));
+    }
+
     /** @param list<array<string,mixed>> $changes */
     public static function summary(array $changes): array
     {
