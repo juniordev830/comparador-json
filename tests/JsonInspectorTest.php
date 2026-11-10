@@ -71,6 +71,21 @@ check(JsonInspector::filter($changes, '/nested')[0]['path'] === '/nested/a', 'pr
 check(count(JsonInspector::filter($changes, '/nested')) === 3, 'nested prefix count');
 check(JsonInspector::filter($changes, '/nest') === [], 'prefix boundary');
 
+// Ignore selected JSON Pointer subtrees without matching sibling prefixes.
+$ignoredChanges = [
+    ['op' => 'replace', 'path' => '/audit/id', 'old' => 1, 'value' => 2],
+    ['op' => 'replace', 'path' => '/audit/logs/0', 'old' => 1, 'value' => 2],
+    ['op' => 'replace', 'path' => '/auditor', 'old' => 1, 'value' => 2],
+    ['op' => 'replace', 'path' => '/a~1b/value', 'old' => 1, 'value' => 2],
+];
+$excluded = JsonInspector::exclude($ignoredChanges, ['/audit', '/a~1b']);
+check(array_column($excluded, 'path') === ['/auditor'], 'ignore with segment boundaries');
+check(JsonInspector::exclude($ignoredChanges, []) === $ignoredChanges, 'no ignores');
+check(JsonInspector::exclude($ignoredChanges, ['']) === [], 'empty pointer excludes root');
+throws(static fn() => JsonInspector::exclude($ignoredChanges, ['/bad~2']), 'invalid ignore escape');
+throws(static fn() => JsonInspector::exclude($ignoredChanges, ['bad']), 'invalid ignore path');
+throws(static fn() => JsonInspector::exclude($ignoredChanges, array_fill(0, 101, '/a')), 'ignore limit');
+
 // JSON Pointer navigation.
 $object = json('{"a/b":{"~name":[0,{"x":null}]}}');
 check(JsonInspector::at($object, '/a~1b/~0name/1/x') === null, 'pointer nested null');

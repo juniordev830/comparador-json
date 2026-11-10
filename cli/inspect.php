@@ -18,6 +18,7 @@ function usage(): string
         '  --format=text        Relatório legível no terminal',
         '  --format=csv         CSV para importar em planilhas',
         '  --path=/a/b          Mostrar apenas diferenças neste JSON Pointer',
+        '  --ignore-path=/a/b   Ignorar mudanças nesta subárvore (repetível)',
         '  --summary            Resumo das operações em JSON',
         '  --fail-on-diff       Código de saída 1 quando houver diferenças',
         '  --help               Exibe esta ajuda',
@@ -45,6 +46,7 @@ function run(array $args): int
     $arrayMode = 'atomic';
     $format = 'json';
     $prefix = '';
+    $ignoredPaths = [];
     $summary = false;
     $failOnDiff = false;
 
@@ -55,6 +57,8 @@ function run(array $args): int
             $format = substr($flag, strlen('--format='));
         } elseif (str_starts_with($flag, '--path=')) {
             $prefix = substr($flag, strlen('--path='));
+        } elseif (str_starts_with($flag, '--ignore-path=')) {
+            $ignoredPaths[] = substr($flag, strlen('--ignore-path='));
         } elseif ($flag === '--summary') {
             $summary = true;
         } elseif ($flag === '--fail-on-diff') {
@@ -71,6 +75,7 @@ function run(array $args): int
     $after = JsonInspector::read($afterPath);
     $changes = JsonInspector::compare($before, $after, $arrayMode);
     $changes = JsonInspector::filter($changes, $prefix);
+    $changes = JsonInspector::exclude($changes, $ignoredPaths);
 
     if ($summary) {
         echo json_encode(
