@@ -74,3 +74,7 @@ echo JsonInspector::asText($changes);
 ## Licença
 
 Ainda não definida.
+
+## Roteiro de qualidade
+
+Consulte o [guia de validação e manutenção](docs/GUIA_DE_VALIDACAO.md) para reproduzir testes, entender as limitações e revisar mudanças com segurança.
