@@ -324,6 +324,10 @@ final class JsonInspector
         $lines = [];
         foreach ($changes as $entry) {
             $path = $entry['path'] === '' ? '<root>' : $entry['path'];
+            // Avoid newlines, tabs and ANSI escape characters in terminal reports.
+            $path = preg_replace_callback('/[\\x00-\\x1F\\x7F]/',
+                static fn (array $match): string => sprintf('\x%02X', ord($match[0])),
+                $path);
             $lines[] = strtoupper($entry['op']) . ' ' . $path;
             if (array_key_exists('old', $entry)) {
                 $lines[] = '  antes: ' . self::encode($entry['old']);
@@ -354,7 +358,7 @@ final class JsonInspector
                 // Neutralize spreadsheet formulas even when preceded by whitespace.
                 $safe = array_map(
                     static fn (string $cell): string =>
-                        preg_match('/^\s*[=+\-@]/', $cell) === 1 ? "'" . $cell : $cell,
+                        preg_match('/^[\x00-\x20\x7F]*[=+\-@]/', $cell) === 1 ? "'" . $cell : $cell,
                     $values
                 );
                 fputcsv($stream, $safe, ',', '"', '');

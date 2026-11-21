@@ -78,3 +78,7 @@ Ainda não definida.
 ## Roteiro de qualidade
 
 Consulte o [guia de validação e manutenção](docs/GUIA_DE_VALIDACAO.md) para reproduzir testes, entender as limitações e revisar mudanças com segurança.
+
+## Saída de relatórios e entradas não confiáveis
+
+Caminhos JSON Pointer podem conter caracteres de controle fornecidos pelos documentos. O relatório de texto os representa como sequências `\\xNN` para evitar simulação de linhas ou códigos ANSI no terminal. O CSV neutraliza fórmulas precedidas por espaços ou controles.

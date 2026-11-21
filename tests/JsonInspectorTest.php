@@ -151,3 +151,15 @@ for ($i = 0; $i <= JsonInspector::MAX_CHANGES; $i++) {
 throws(static fn() => JsonInspector::compare($left, $right), 'difference limit');
 
 echo "JsonInspector: {$checks} assertions passed.\n";
+
+// Untrusted JSON keys must not forge extra terminal report lines.
+$untrustedPath = '/broken' . chr(10) . 'ADD /fake' . chr(27) . '[31m';
+$safeText = JsonInspector::asText([['op' => 'add', 'path' => $untrustedPath, 'value' => true]]);
+check(substr_count($safeText, "\n") === 2, 'terminal path cannot inject new lines');
+check(!str_contains($safeText, chr(27)), 'terminal path strips raw ANSI escape');
+check(str_contains($safeText, '\\x0A') && str_contains($safeText, '\\x1B'), 'terminal report escapes controls');
+
+$prefixedFormula = JsonInspector::asCsv([
+    ['op' => 'add', 'path' => chr(0) . chr(9) . '=1+2', 'value' => 1],
+]);
+check(str_contains($prefixedFormula, "'" . chr(0) . chr(9) . '=1+2'), 'CSV neutralizes control-prefixed formulas');
