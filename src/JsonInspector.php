@@ -28,7 +28,8 @@ final class JsonInspector
         if ($size === false || $size > self::MAX_BYTES) {
             throw new RuntimeException('Documento excede 2 MB.');
         }
-        $data = file_get_contents($filename);
+        // Cap the read itself, not just filesize(): the file can grow after stat().
+        $data = file_get_contents($filename, false, null, 0, self::MAX_BYTES + 1);
         if ($data === false) {
             throw new RuntimeException('Falha ao ler arquivo.');
         }
