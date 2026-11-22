@@ -78,10 +78,14 @@ final class JsonInspector
         if (!str_starts_with($pointer, '/')) {
             throw new InvalidArgumentException('JSON Pointer deve começar com /');
         }
-        return array_map(
-            [self::class, 'unescapePointer'],
-            explode('/', substr($pointer, 1))
-        );
+        if (strlen($pointer) > 4096) {
+            throw new InvalidArgumentException('JSON Pointer excede 4096 caracteres.');
+        }
+        $parts = explode('/', substr($pointer, 1));
+        if (count($parts) > 64) {
+            throw new InvalidArgumentException('JSON Pointer excede 64 segmentos.');
+        }
+        return array_map([self::class, 'unescapePointer'], $parts);
     }
 
     public static function at(mixed $document, string $pointer): mixed
