@@ -28,7 +28,8 @@ final class JsonInspector
         if ($size === false || $size > self::MAX_BYTES) {
             throw new RuntimeException('Documento excede 2 MB.');
         }
-        $data = file_get_contents($filename);
+        // Cap the read itself, not just filesize(): the file can grow after stat().
+        $data = file_get_contents($filename, false, null, 0, self::MAX_BYTES + 1);
         if ($data === false) {
             throw new RuntimeException('Falha ao ler arquivo.');
         }
@@ -77,10 +78,14 @@ final class JsonInspector
         if (!str_starts_with($pointer, '/')) {
             throw new InvalidArgumentException('JSON Pointer deve começar com /');
         }
-        return array_map(
-            [self::class, 'unescapePointer'],
-            explode('/', substr($pointer, 1))
-        );
+        if (strlen($pointer) > 4096) {
+            throw new InvalidArgumentException('JSON Pointer excede 4096 caracteres.');
+        }
+        $parts = explode('/', substr($pointer, 1));
+        if (count($parts) > 64) {
+            throw new InvalidArgumentException('JSON Pointer excede 64 segmentos.');
+        }
+        return array_map([self::class, 'unescapePointer'], $parts);
     }
 
     public static function at(mixed $document, string $pointer): mixed

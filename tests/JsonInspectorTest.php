@@ -98,6 +98,9 @@ throws(static fn() => JsonInspector::at(json('[10]'), '/01'), 'leading-zero arra
 throws(static fn() => JsonInspector::at(json('[10]'), '/-'), 'array append not a lookup');
 throws(static fn() => JsonInspector::segments('/bad~2key'), 'invalid tilde escape');
 throws(static fn() => JsonInspector::segments('bad'), 'missing slash');
+throws(static fn() => JsonInspector::segments('/' . str_repeat('a', 4096)), 'pointer length limit');
+throws(static fn() => JsonInspector::segments(str_repeat('/key', 65)), 'pointer segment limit');
+check(count(JsonInspector::segments(str_repeat('/key', 64))) === 64, '64 segments allowed');
 
 // Array-index mode is diagnostic, not a JSON Patch.
 $a = json('[{"id":1,"name":"A"},{"id":2,"name":"B"}]');
@@ -131,6 +134,8 @@ if ($tmp === false) {
 try {
     file_put_contents($tmp, '{"ok":true}');
     check(JsonInspector::read($tmp)->ok === true, 'read valid file');
+    file_put_contents($tmp, '"' . str_repeat('a', JsonInspector::MAX_BYTES - 2) . '"');
+    check(strlen(JsonInspector::read($tmp)) === JsonInspector::MAX_BYTES - 2, 'max size JSON accepted');
     file_put_contents($tmp, '{invalid');
     throws(static fn() => JsonInspector::read($tmp), 'bad JSON');
     file_put_contents($tmp, str_repeat('x', JsonInspector::MAX_BYTES + 1));
