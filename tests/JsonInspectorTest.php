@@ -131,6 +131,8 @@ if ($tmp === false) {
 try {
     file_put_contents($tmp, '{"ok":true}');
     check(JsonInspector::read($tmp)->ok === true, 'read valid file');
+    file_put_contents($tmp, '"' . str_repeat('a', JsonInspector::MAX_BYTES - 2) . '"');
+    check(strlen(JsonInspector::read($tmp)) === JsonInspector::MAX_BYTES - 2, 'max size JSON accepted');
     file_put_contents($tmp, '{invalid');
     throws(static fn() => JsonInspector::read($tmp), 'bad JSON');
     file_put_contents($tmp, str_repeat('x', JsonInspector::MAX_BYTES + 1));
