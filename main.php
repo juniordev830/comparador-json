@@ -23,6 +23,9 @@ function diff(mixed $a, mixed $b, string $path=''): array {
 function readJson(string $path): mixed {
     if (!is_file($path) || filesize($path)>2_000_000) throw new RuntimeException('Arquivo ausente ou maior que 2 MB');
     $text=file_get_contents($path); if ($text===false) throw new RuntimeException('Falha de leitura');
+    if (str_starts_with($text, "\xEF\xBB\xBF")) {
+        $text = substr($text, 3);
+    }
     return json_decode($text,false,128,JSON_THROW_ON_ERROR | JSON_BIGINT_AS_STRING);
 }
 function expect(bool $ok): void { if (!$ok) throw new RuntimeException('Teste falhou'); }

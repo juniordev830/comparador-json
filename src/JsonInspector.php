@@ -41,6 +41,9 @@ final class JsonInspector
             throw new InvalidArgumentException('Documento excede 2 MB.');
         }
         try {
+            if (str_starts_with($data, "\xEF\xBB\xBF")) {
+                $data = substr($data, 3);
+            }
             return json_decode(
                 $data,
                 false,
